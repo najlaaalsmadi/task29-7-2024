@@ -22,7 +22,7 @@
                     <li>@Html.ActionLink("Contact", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li>@Html.ActionLink("Index", "Index", "People", new { area = "" }, new { @class = "nav-link" })</li>
 
-                    @if (Session["Email"] != null)
+                    @if (Request.Cookies["UserEmail"] != null)
                     {
                         <li>@Html.ActionLink("Profile", "Profile", "People", new { area = "" }, new { @class = "nav-link" })</li>
                         <li>@Html.ActionLink("Logout", "Logout", "People", new { area = "" }, new { @class = "nav-link" })</li>

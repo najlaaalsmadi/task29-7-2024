@@ -130,20 +130,22 @@ namespace WebApplication14.Controllers
         // POST: People/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // POST: People/Login
-       
         public ActionResult Login(string email, string password)
         {
             var user = db.People.FirstOrDefault(u => u.email == email && u.password == password);
             if (user != null)
             {
-                Session["Email"] = email; // Simple session management
+                // إنشاء كوكيز
+                HttpCookie cookie = new HttpCookie("UserEmail");
+                cookie.Value = email;
+                cookie.Expires = DateTime.Now.AddHours(1); // الكوكيز تنتهي بعد ساعة
+                Response.Cookies.Add(cookie);
+
                 return RedirectToAction("Index", "Home");
             }
             ModelState.AddModelError("", "Invalid email or password");
             return View();
         }
-
 
         // GET: People/Register
         public ActionResult Register()
@@ -154,7 +156,6 @@ namespace WebApplication14.Controllers
         // POST: People/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        
         public ActionResult Register(Person person, HttpPostedFileBase ImageFile)
         {
             if (ModelState.IsValid)
@@ -176,17 +177,17 @@ namespace WebApplication14.Controllers
             return View(person);
         }
 
-
-        // GET: People/Profile
         // GET: People/Profile
         public ActionResult Profile()
         {
-            if (Session["Email"] == null)
+            // استخدام الكوكيز بدلاً من السيشن
+            var cookie = Request.Cookies["UserEmail"];
+            if (cookie == null)
             {
                 return RedirectToAction("Login");
             }
 
-            var email = Session["Email"].ToString();
+            var email = cookie.Value;
             var user = db.People.FirstOrDefault(u => u.email == email);
 
             if (user == null)
@@ -209,12 +210,13 @@ namespace WebApplication14.Controllers
         // GET: People/EditProfile
         public ActionResult EditProfile()
         {
-            if (Session["Email"] == null)
+            var cookie = Request.Cookies["UserEmail"];
+            if (cookie == null)
             {
                 return RedirectToAction("Login");
             }
 
-            var email = Session["Email"].ToString();
+            var email = cookie.Value;
             var user = db.People.FirstOrDefault(u => u.email == email);
 
             if (user == null)
@@ -224,7 +226,7 @@ namespace WebApplication14.Controllers
 
             var model = new Person
             {
-                Personid = user.Personid,  // Ensure Personid is included
+                Personid = user.Personid,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 email = user.email,
@@ -235,17 +237,17 @@ namespace WebApplication14.Controllers
             return View(model);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult EditProfile(Person person, HttpPostedFileBase ImageFile)
         {
-            if (Session["Email"] == null)
+            var cookie = Request.Cookies["UserEmail"];
+            if (cookie == null)
             {
                 return RedirectToAction("Login");
             }
 
-            var email = Session["Email"].ToString();
+            var email = cookie.Value;
             var user = db.People.FirstOrDefault(u => u.email == email);
 
             if (user == null)
@@ -302,11 +304,6 @@ namespace WebApplication14.Controllers
             }
         }
 
-
-        
-
-       
-
         // GET: People/ResetPassword
         public ActionResult ResetPassword()
         {
@@ -316,15 +313,15 @@ namespace WebApplication14.Controllers
         // POST: People/ResetPassword
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // POST: People/ResetPassword
         public ActionResult ResetPassword(string oldPassword, string newPassword, string confirmPassword)
         {
-            if (Session["Email"] == null)
+            var cookie = Request.Cookies["UserEmail"];
+            if (cookie == null)
             {
                 return RedirectToAction("Login");
             }
 
-            var email = Session["Email"].ToString();
+            var email = cookie.Value;
             var user = db.People.FirstOrDefault(u => u.email == email);
 
             if (user == null || user.password != oldPassword)
@@ -345,13 +342,19 @@ namespace WebApplication14.Controllers
 
             return RedirectToAction("Profile");
         }
+
         // GET: People/Logout
         public ActionResult Logout()
         {
-            Session.Clear(); // Clear the session
+            // حذف الكوكيز
+            if (Request.Cookies["UserEmail"] != null)
+            {
+                var cookie = new HttpCookie("UserEmail");
+                cookie.Expires = DateTime.Now.AddDays(-1); // جعل الكوكيز منتهية
+                Response.Cookies.Add(cookie);
+            }
+
             return RedirectToAction("Index", "Home");
         }
-
-
     }
 }
